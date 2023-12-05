@@ -30,6 +30,7 @@ public class PlayerController : MonoBehaviour
             _isFacingRight = value;
         }
     }
+
     private void SetFacingDirection(Vector2 moveInput)
     {
         Debug.Log("IsFacingRight: " + IsFacingRight);
@@ -44,33 +45,33 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public bool CanMove { get { return animator.GetBool(AnimationStrings.canMove); } }
+
     // determines the current Movement speed via the isMoving and isRunning parameters
     public float CurrentWalkSpeed
     {
         get
         {
-            if (IsMoving && !touchingDirs.IsOnWall)
+            if (!CanMove)
             {
-                if (touchingDirs.IsGrounded)
-                {
-                    if (IsRunning)
-                    {
-                        return runSpeed;
-                    }
-                    else
-                    {
-                        return walkSpeed;
-                    }
-                }
-                else
-                {
-                    return airWalkSpeed;
-                }
-            }
-            else
-            {
+                // Movement is locked
                 return 0;
             }
+
+            if (!IsMoving || touchingDirs.IsOnWall)
+            {
+                // Idle speed is 0 or affected by wall
+                return 0;
+            }
+
+            if (!touchingDirs.IsGrounded)
+            {
+                // Air Movement
+                return airWalkSpeed;
+            }
+
+            // Ground Movement
+            return IsRunning ? runSpeed : walkSpeed;
         }
     }
 
@@ -138,12 +139,21 @@ public class PlayerController : MonoBehaviour
     public void OnJump(InputAction.CallbackContext ctx)
     {
         // TODO: check if alive as well
-        if (ctx.started && touchingDirs.IsGrounded)
+        if (ctx.started && touchingDirs.IsGrounded && CanMove)
         {
             animator.SetTrigger(AnimationStrings.jump);
             rb.velocity = new Vector2(rb.velocity.x, jumpImpulse);
         }
-        else if (ctx.canceled) { }
+    }
+
+    public void OnAttack(InputAction.CallbackContext ctx)
+    {
+        if (ctx.started)
+        {
+            animator.SetTrigger(AnimationStrings.attackTrigger);
+            rb.velocity = new Vector2(moveInput.x * 0f, 0f); // Adjust the y-component if necessary
+        }
 
     }
+
 }

@@ -7,4 +7,6 @@ internal class AnimationStrings
     internal static string isOnCeiling = "isOnCeiling";
     internal static string yVelocity = "yVelocity";
     internal static string jump = "jump";
+    internal static string attackTrigger = "attackTrigger";
+    internal static string canMove = "canMove";
 }
