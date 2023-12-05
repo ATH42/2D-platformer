@@ -6,10 +6,13 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     Rigidbody2D rb;
-    Animator animator;
+    private Animator animator;
     Vector2 moveInput;
-    public float walkSpeed = 5f;
+    public float walkSpeed = 3f;
     public float runSpeed = 8f;
+    public float airWalkSpeed = 9f;
+    TouchingDirections touchingDirs;
+    public float jumpImpulse = 9f;
 
     [SerializeField]
     public bool _isFacingRight = true;
@@ -46,15 +49,22 @@ public class PlayerController : MonoBehaviour
     {
         get
         {
-            if (IsMoving == true)
+            if (IsMoving && !touchingDirs.IsOnWall)
             {
-                if (IsRunning)
+                if (touchingDirs.IsGrounded)
                 {
-                    return runSpeed;
+                    if (IsRunning)
+                    {
+                        return runSpeed;
+                    }
+                    else
+                    {
+                        return walkSpeed;
+                    }
                 }
                 else
                 {
-                    return walkSpeed;
+                    return airWalkSpeed;
                 }
             }
             else
@@ -75,7 +85,7 @@ public class PlayerController : MonoBehaviour
         private set
         {
             _isMoving = value;
-            animator.SetBool("isMoving", value);
+            animator.SetBool(AnimationStrings.isMoving, value);
         }
     }
 
@@ -87,7 +97,7 @@ public class PlayerController : MonoBehaviour
         set
         {
             _isRunning = value;
-            animator.SetBool("isRunning", value);
+            animator.SetBool(AnimationStrings.isRunning, value);
         }
     }
 
@@ -96,21 +106,15 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        touchingDirs = GetComponent<TouchingDirections>();
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
-    // Update is called once per frame
-    void Update()
-    {
-    }
     void FixedUpdate()
     {
         rb.velocity = new Vector2(moveInput.x * CurrentWalkSpeed, rb.velocity.y);
-
+        animator.SetFloat(AnimationStrings.yVelocity, rb.velocity.y);
     }
+
     public void OnMove(InputAction.CallbackContext ctx)
     {
         moveInput = ctx.ReadValue<Vector2>();
@@ -128,5 +132,18 @@ public class PlayerController : MonoBehaviour
         {
             IsRunning = false;
         }
+
+    }
+
+    public void OnJump(InputAction.CallbackContext ctx)
+    {
+        // TODO: check if alive as well
+        if (ctx.started && touchingDirs.IsGrounded)
+        {
+            animator.SetTrigger(AnimationStrings.jump);
+            rb.velocity = new Vector2(rb.velocity.x, jumpImpulse);
+        }
+        else if (ctx.canceled) { }
+
     }
 }
